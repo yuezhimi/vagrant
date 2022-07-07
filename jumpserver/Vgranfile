@@ -1,0 +1,84 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$public_script = <<-SCRIPT
+echo 'zerosky123' | passwd --stdin vagrant
+sed -i 's/#PasswordAuthentication/PasswordAuthentication/' /etc/ssh/sshd_config
+sed -i 's/PasswordAuthentication no//' /etc/ssh/sshd_config
+timedatectl set-timezone Asia/Shanghai
+yum update -y
+yum install -y epel-release
+yum install -y tcping net-tools wget cloud-utils-growpart bash-com*
+#yum install -y http://opensource.wandisco.com/centos/6/git/x86_64/wandisco-git-release-6-1.noarch.rpm
+#yum install -y git
+#cp /share/git-completion.bash /etc/profile.d/
+mkdir -pv /data
+growpart /dev/sda 1
+xfs_growfs /dev/sda1
+cat /etc/fstab | grep '/data'
+if [[ $? -eq 1 ]];then
+ mkfs.xfs /dev/sdb
+ uuid=$(blkid /dev/sdb | awk -F '[ "]' '{print$3}')
+ echo "UUID=${uuid} /data xfs defaults 0 0" >> /etc/fstab
+ mount -a
+ cat /etc/fstab
+ df -Th
+else
+ echo "data disk is mounted!"
+ cat /etc/fstab
+ df -Th
+fi
+which docker
+if [[ $? -eq 0 ]];then
+ echo "skip install docker"
+else
+ yum remove -y docker docker-common docker-selinux docker-engine
+ yum install -y yum-utils device-mapper-persistent-data lvm2 wget
+ wget -O /etc/yum.repos.d/docker-ce.repo https://download.docker.com/linux/centos/docker-ce.repo
+ sed -i 's+download.docker.com+mirrors.tuna.tsinghua.edu.cn/docker-ce+' /etc/yum.repos.d/docker-ce.repo
+ yum makecache fast
+ yum install -y docker-ce
+ gpasswd -a vagrant docker 
+ mkdir -p /etc/docker
+tee /etc/docker/daemon.json <<-'EOF'
+{
+ "registry-mirrors": ["https://4syi2pvo.mirror.aliyuncs.com"],
+ "max-concurrent-downloads": 2
+}
+EOF
+systemctl daemon-reload
+systemctl enable docker
+systemctl restart docker
+fi
+SCRIPT
+Vagrant.configure("2") do |config|
+ config.vm.box = "centos7"
+ config.vm.box_url = "https://mirrors.ustc.edu.cn/centos-cloud/centos/7/vagrant/x86_64/images/CentOS-7.box"
+ config.vm.provider :virtualbox
+ config.vm.synced_folder "public_data/", "/public_data", owner: "root", group: "root"
+ config.vm.provision "shell", inline: $public_script
+ config.vm.define "jumpserver" do |config|
+ config.vm.hostname = "jumpserver"
+ config.vm.disk :disk, size: "50GB", primary: true
+ config.vm.disk :disk, size: "100GB", primary: false, name: "data"
+ config.vm.network "public_network", ip: "172.16.110.101", bridge: "enp7s0"
+ #config.vm.network "forwarded_port", guest: 8080, host: 8081
+ config.vm.provider "virtualbox" do |vb|
+ vb.name = "jumpserver"
+ vb.cpus = 2
+ vb.memory = "4096"
+ vb.default_nic_type = "virtio"
+ end
+ end
+ config.vm.define "store" do |config|
+ config.vm.hostname = "store"
+ config.vm.disk :disk, size: "1024GB", primary: false, name: "data"
+ config.vm.network "public_network", ip: "172.16.110.102", bridge: "enp7s0"
+ config.vm.provider "virtualbox" do |vb|
+ vb.name = "store"
+ vb.cpus = 4
+ vb.memory = "8192"
+ vb.default_nic_type = "virtio"
+ end
+ end
+end
