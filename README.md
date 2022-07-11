@@ -1,4 +1,4 @@
-## Vagrant虚拟化管理工具
+## Vagrant
 
 ### 安装
 
@@ -74,7 +74,5 @@
   vagrant plugin install vagrant-disksize
 vagrant plugin install vagrant-vbguest
   vagrant plugin install vagrant-winnfsd
-  
   ```
-  
   
