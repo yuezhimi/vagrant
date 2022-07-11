@@ -4,36 +4,43 @@
 host_list = [
   {
     :name => "host1",
-    :box => "centos/7",
+    :box => "centos7",
     :eth1 => "192.168.50.11",
-    :eth2 => "192.168.1.11"
+    :eth2 => "192.168.10.111",
+    :mem => "4096",
+    :cpu => "2"
   },
   {
     :name => "host2",
-    :box => "centos/7",
+    :box => "centos7",
     :eth1 => "192.168.50.12",
-    :eth2 => "192.168.1.12"
+    :eth2 => "192.168.10.112",
+    :mem => "2048",
+    :cpu => "2"
   }
 ]
 
 Vagrant.configure("2") do |config|
   host_list.each do |item|
-    config.vm.provider "hypery" do |v|
-      config.vm.synced_folder ".","/vagrant",type: "smb"
-    end
-    config.vm.provider "virtualbox" do |_, override|
-      config.vm.synced_folder ".","/vagrant",type: "virtualbox"
-      vb.gui = false
-      vb.memory = "2048"
-      vb.cpus  = "2"
-      vb.name = "node01.devops.com"
-    end
-
-    config.vm.defline item[:name] do |host|
+    Encoding.default_external = 'UTF-8'
+    
+    config.vm.define item[:name] do |host|
       host.vm.hostname = item[:name]
       host.vm.box = item[:box]
+      # host.vm.box_url = "https://mirrors.ustc.edu.cn/centos-cloud/centos/7/vagrant/x86_64/images/CentOS-7.box"
+      host.vm.box_url = "file:\\D:\\vagrant-demo\\CentOS-7-x86_64-Vagrant-2004_01.VirtualBox.box"
       host.vm.network "private_network", ip: item[:eth1]
-      host.vm.network "public_network", bridge: "wlp0s20f3",ip: item[:eth1]
+      host.vm.network "public_network",ip: item[:eth2], bridge: 'Intel(R) Wireless-AC 9462'
+      host.vm.synced_folder ".","/vagrant",type: "virtualbox"
+      host.vm.disk :disk, size: "50GB", primary: true
+      host.vm.disk :disk, size: "120GB", name: "data"
+      host.vm.provider "virtualbox" do |vb|
+        vb.gui = false
+        vb.default_nic_type = "virtio"
+        vb.memory = item[:mem]
+        vb.cpus  = item[:cpu]
+        # vb.name = item[:name]
+      end
     end
     config.vm.provision "shell", path: "./setup.sh"
     # config.vm.provision "ansible", playbook: "playbook.yaml"

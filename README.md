@@ -70,8 +70,11 @@
 
 - ```powershell
   # 安装插件
-  vagrant plugin install vagrant-vbguest --plugin-version 0.21
+  #vagrant plugin install vagrant-vbguest --plugin-version 0.21
+  vagrant plugin install vagrant-disksize
+vagrant plugin install vagrant-vbguest
+  vagrant plugin install vagrant-winnfsd
   ```
-
+  
   
 
