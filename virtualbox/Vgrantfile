@@ -39,7 +39,7 @@ Vagrant.configure("2") do |config|
         vb.default_nic_type = "virtio"
         vb.memory = item[:mem]
         vb.cpus  = item[:cpu]
-        # vb.name = item[:name]
+        vb.name = item[:name]
       end
     end
     config.vm.provision "shell", path: "./setup.sh"
