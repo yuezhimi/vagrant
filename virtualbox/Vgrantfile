@@ -23,7 +23,7 @@ host_list = [
 Vagrant.configure("2") do |config|
   host_list.each do |item|
     Encoding.default_external = 'UTF-8'
-    
+
     config.vm.define item[:name] do |host|
       host.vm.hostname = item[:name]
       host.vm.box = item[:box]

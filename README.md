@@ -71,8 +71,10 @@
 - ```powershell
   # 安装插件
   #vagrant plugin install vagrant-vbguest --plugin-version 0.21
-  vagrant plugin install vagrant-disksize
-vagrant plugin install vagrant-vbguest
-  vagrant plugin install vagrant-winnfsd
+  vagrant plugin install --plugin-clean-sources --plugin-source https://gems.ruby-china.com/ vagrant-disksize
+  vagrant plugin install --plugin-clean-sources --plugin-source https://gems.ruby-china.com/ vagrant-vbguest
+  # vagrant plugin install --plugin-clean-sources --plugin-source https://gems.ruby-china.com/ vagrant-winnfsd
+  
   ```
+
   
